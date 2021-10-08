@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Poll View{% endblock %}
+
+{% block content %}
+
+<h1>Poll View</h1>
+<h2>{{ poll.question }}</h2>
+<form method="POST">
+<table>
+    <tr>
+        <th>Answer</th>
+        <th>Votes</th>
+        <th></th>
+    </tr>
+    {% if poll.answer1 %}
+    <tr>
+        <td>{{ poll.answer1 }}</td>
+        <td>{{ poll.votes1 }}</td>
+        <td><button name="vote" type="submit" value="votes1">Vote!</button></td>
+    </tr>
+    {% endif %}
+    {% if poll.answer2 %}
+    <tr>
+        <td>{{ poll.answer2 }}</td>
+        <td>{{ poll.votes2 }}</td>
+        <td><button name="vote" type="submit" value="votes2">Vote!</button></td>
+    </tr>
+    {% endif %}
+    {% if poll.answer3 %}
+    <tr>
+        <td>{{ poll.answer3 }}</td>
+        <td>{{ poll.votes3 }}</td>
+        <td><button name="vote" type="submit" value="votes3">Vote!</button></td>
+    </tr>
+    {% endif %}
+    {% if poll.answer4 %}
+    <tr>
+        <td>{{ poll.answer4 }}</td>
+        <td>{{ poll.votes4 }}</td>
+        <td><button name="vote" type="submit" value="votes4">Vote!</button></td>
+    </tr>
+    {% endif %}
+</table>
+</form>
+
+<p>
+    <a href="{{ url_for('poll_delete', index=poll.id) }}">Delete poll</a>
+</p>
+
+<p>
+    <a href="{{ url_for('index') }}">Return to home</a>
+</p>
+
+{% endblock %}

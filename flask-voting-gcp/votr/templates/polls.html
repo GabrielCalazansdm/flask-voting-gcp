@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Polls{% endblock %}
+
+{% block content %}
+<h1>Poll Home Page</h1>
+<p>Welcome to the amazing polls home page. Go ahead and select a poll to vote on, or create a new poll for others!</p>
+<h2>Current Polls</h2>
+<ul>
+    {% for poll in polls %}
+        <li>
+            <a href="{{ url_for('poll_view', index=poll['id']) }}">
+                {{ poll['question'] }}
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+<br>
+<p>
+    <a href="{{ url_for('create')}}">Click to Add a New Poll</a>
+</p>
+{% endblock %}

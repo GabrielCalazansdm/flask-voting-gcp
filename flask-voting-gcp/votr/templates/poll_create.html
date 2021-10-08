@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Poll Create{% endblock %}
+
+{% block content %}
+
+<h1>Add a new poll</h1>
+<h2>Specify a poll question and up to four answers:</h2>
+        <form method="POST">
+            <p>
+                Question: <input type="text" name="question">
+            </p>
+            <p>
+                Answer 1: <input type="text" name="answer1">
+            </p>
+            <p>
+                Answer 2: <input type="text" name="answer2">
+            </p>
+            <p>
+                Answer 3: <input type="text" name="answer3">
+            </p>
+            <p>
+                Answer 4: <input type="text" name="answer4">
+            </p>
+            <button type="submit">Create</button>
+        </form>
+
+{% endblock %}
