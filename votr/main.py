@@ -3,7 +3,7 @@ import sqlalchemy
 
 from werkzeug.exceptions import abort
 
-from . import sql
+import sql
 
 # This global variable is declared with a value of `None`, instead of calling
 # `init_connection_engine()` immediately, to simplify testing. In general, it
@@ -118,3 +118,9 @@ def poll_delete(index):
             id=str(index)
         )
     return redirect(url_for('index'))
+
+if __name__ == '__main__':
+ 
+    # run() method of Flask class runs the application 
+    # on the local development server.
+    app.run()
