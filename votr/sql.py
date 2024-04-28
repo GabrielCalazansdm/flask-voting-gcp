@@ -1,7 +1,13 @@
 import os
 import sqlalchemy
+import google.cloud.logging
+import logging
 
-def init_connection_engine():
+
+client = google.cloud.logging.Client()
+client.setup_logging()
+
+def init_connection_engine(app):
     db_config = {
         # [START cloud_sql_mysql_sqlalchemy_limit]
         # Pool size is the maximum number of permanent connections to keep.
@@ -30,31 +36,46 @@ def init_connection_engine():
         # reestablished
         "pool_recycle": 1800,  # 30 minutes
         # [END cloud_sql_mysql_sqlalchemy_lifetime]
-
+        
     }
+    
     host = os.environ.get("DB_HOST")
     print(f"DB_HOST {host}")
+    logging.warning(f"DB_HOST {host}")
+    app.logger.info(f"DB_HOST {host}")
     if os.environ.get("DB_HOST"):
-        return init_tcp_connection_engine(db_config)
+        return init_tcp_connection_engine(db_config,app)
     else:
         return init_unix_connection_engine(db_config)
 
 
-def init_tcp_connection_engine(db_config):
+def init_tcp_connection_engine(db_config,app):
     # [START cloud_sql_mysql_sqlalchemy_create_tcp]
     # Remember - storing secrets in plaintext is potentially unsafe. Consider using
     # something like https://cloud.google.com/secret-manager/docs/overview to help keep
     # secrets secret.
-    host = os.environ.get("DB_USER")
+    
+    db_user = os.environ.get("DB_USER")
+    logging.warning(f"DB_HOST {db_user}")
+    app.logger.info(f"DB_HOST {db_user}")
     print(f"DB_HOST {db_user}")
     db_user = os.environ["DB_USER"]
-    host = os.environ.get("DB_PASS")
+    
+    db_pass = os.environ.get("DB_PASS")
+    logging.warning(f"DB_HOST {db_pass}")
+    app.logger.info(f"DB_HOST {db_pass}")
     print(f"DB_HOST {db_pass}")
     db_pass = os.environ["DB_PASS"]
-    host = os.environ.get("DB_NAME")
+    
+    db_name = os.environ.get("DB_NAME")
+    logging.warning(f"DB_HOST {db_name}")
+    app.logger.info(f"DB_HOST {db_name}")
     print(f"DB_HOST {db_name}")
     db_name = os.environ["DB_NAME"]
-    host = os.environ.get("DB_HOST")
+    
+    db_host = os.environ.get("DB_HOST")
+    logging.warning(f"DB_HOST {db_host}")
+    app.logger.info(f"DB_HOST {db_host}")
     print(f"DB_HOST {db_host}")
     db_host = os.environ["DB_HOST"]
 

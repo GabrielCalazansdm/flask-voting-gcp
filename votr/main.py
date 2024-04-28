@@ -16,7 +16,7 @@ app = Flask(__name__)
 @app.before_first_request
 def create_tables():
     global db
-    db = db or sql.init_connection_engine()
+    db = db or sql.init_connection_engine(app)
     # Create tables (if they don't already exist)
     with db.connect() as conn:
         conn.execute(
