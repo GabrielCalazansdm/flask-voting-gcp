@@ -32,7 +32,8 @@ def init_connection_engine():
         # [END cloud_sql_mysql_sqlalchemy_lifetime]
 
     }
-
+    host = os.environ.get("DB_HOST")
+    print(f"DB_HOST {host}")
     if os.environ.get("DB_HOST"):
         return init_tcp_connection_engine(db_config)
     else:
@@ -44,9 +45,17 @@ def init_tcp_connection_engine(db_config):
     # Remember - storing secrets in plaintext is potentially unsafe. Consider using
     # something like https://cloud.google.com/secret-manager/docs/overview to help keep
     # secrets secret.
+    host = os.environ.get("DB_USER")
+    print(f"DB_HOST {db_user}")
     db_user = os.environ["DB_USER"]
+    host = os.environ.get("DB_PASS")
+    print(f"DB_HOST {db_pass}")
     db_pass = os.environ["DB_PASS"]
+    host = os.environ.get("DB_NAME")
+    print(f"DB_HOST {db_name}")
     db_name = os.environ["DB_NAME"]
+    host = os.environ.get("DB_HOST")
+    print(f"DB_HOST {db_host}")
     db_host = os.environ["DB_HOST"]
 
     # Extract host and port from db_host
