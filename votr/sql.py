@@ -1,13 +1,17 @@
 import os
 import sqlalchemy
-import google.cloud.logging
-import logging
+import subprocess
+import json
+
+def get_secrets():
+    secret_vault = str(subprocess.run(["curl", "-sS", "http://metadata.google.internal/computeMetadata/v1/instance/attributes/secret-id", "-H", "Metadata-Flavor: Google"],  capture_output=True).stdout)[2:-1]
+    secret_name = secret_vault.split("/")[3]
+    secret_version = secret_vault.split("/")[5]
+    secrets = str(subprocess.run(["gcloud", "secrets", "versions", "access", secret_version, f"--secret={secret_name}"],  capture_output=True).stdout)[2:-1]
+    return json.loads(secrets)
 
 
-client = google.cloud.logging.Client()
-client.setup_logging()
-
-def init_connection_engine(app):
+def init_connection_engine():
     db_config = {
         # [START cloud_sql_mysql_sqlalchemy_limit]
         # Pool size is the maximum number of permanent connections to keep.
@@ -36,48 +40,26 @@ def init_connection_engine(app):
         # reestablished
         "pool_recycle": 1800,  # 30 minutes
         # [END cloud_sql_mysql_sqlalchemy_lifetime]
-        
+
     }
     
-    host = os.environ.get("DB_HOST")
-    print(f"DB_HOST {host}")
-    logging.warning(f"DB_HOST {host}")
-    app.logger.info(f"DB_HOST {host}")
-    if os.environ.get("DB_HOST"):
-        return init_tcp_connection_engine(db_config,app)
+    secrets = get_secrets()
+
+    if "DB_HOST" in secrets:
+        return init_tcp_connection_engine(db_config, secrets)
     else:
-        return init_unix_connection_engine(db_config)
+        return init_unix_connection_engine(db_config, secrets)
 
 
-def init_tcp_connection_engine(db_config,app):
+def init_tcp_connection_engine(db_config, secrets):
     # [START cloud_sql_mysql_sqlalchemy_create_tcp]
     # Remember - storing secrets in plaintext is potentially unsafe. Consider using
     # something like https://cloud.google.com/secret-manager/docs/overview to help keep
     # secrets secret.
-    
-    db_user = os.environ.get("DB_USER")
-    logging.warning(f"DB_HOST {db_user}")
-    app.logger.info(f"DB_HOST {db_user}")
-    print(f"DB_HOST {db_user}")
-    db_user = os.environ["DB_USER"]
-    
-    db_pass = os.environ.get("DB_PASS")
-    logging.warning(f"DB_HOST {db_pass}")
-    app.logger.info(f"DB_HOST {db_pass}")
-    print(f"DB_HOST {db_pass}")
-    db_pass = os.environ["DB_PASS"]
-    
-    db_name = os.environ.get("DB_NAME")
-    logging.warning(f"DB_HOST {db_name}")
-    app.logger.info(f"DB_HOST {db_name}")
-    print(f"DB_HOST {db_name}")
-    db_name = os.environ["DB_NAME"]
-    
-    db_host = os.environ.get("DB_HOST")
-    logging.warning(f"DB_HOST {db_host}")
-    app.logger.info(f"DB_HOST {db_host}")
-    print(f"DB_HOST {db_host}")
-    db_host = os.environ["DB_HOST"]
+    db_user = secrets["DB_USER"]
+    db_pass = secrets["DB_PASS"]
+    db_name = secrets["DB_NAME"]
+    db_host = secrets["DB_HOST"]
 
     # Extract host and port from db_host
     host_args = db_host.split(":")
@@ -101,16 +83,16 @@ def init_tcp_connection_engine(db_config,app):
     return pool
 
 
-def init_unix_connection_engine(db_config):
+def init_unix_connection_engine(db_config, secrets):
     # [START cloud_sql_mysql_sqlalchemy_create_socket]
     # Remember - storing secrets in plaintext is potentially unsafe. Consider using
     # something like https://cloud.google.com/secret-manager/docs/overview to help keep
     # secrets secret.
-    db_user = os.environ["DB_USER"]
-    db_pass = os.environ["DB_PASS"]
-    db_name = os.environ["DB_NAME"]
+    db_user = secrets["DB_USER"]
+    db_pass = secrets["DB_PASS"]
+    db_name = secrets["DB_NAME"]
     db_socket_dir = os.environ.get("DB_SOCKET_DIR", "/cloudsql")
-    cloud_sql_connection_name = os.environ["CLOUD_SQL_CONNECTION_NAME"]
+    cloud_sql_connection_name = secrets["CLOUD_SQL_CONNECTION_NAME"]
 
     pool = sqlalchemy.create_engine(
         # Equivalent URL:

@@ -3,7 +3,7 @@ import sqlalchemy
 
 from werkzeug.exceptions import abort
 
-import sql
+from . import sql
 
 # This global variable is declared with a value of `None`, instead of calling
 # `init_connection_engine()` immediately, to simplify testing. In general, it
