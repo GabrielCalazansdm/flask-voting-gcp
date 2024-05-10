@@ -53,6 +53,24 @@ resource "google_compute_firewall" "https" {
   target_tags = ["https-server"]
 }
 
+resource "google_compute_firewall" "https-local" {
+  project = var.project_id
+  name = "${var.network_name}-https-local"
+  direction = "INGRESS"
+  network = google_compute_network.cesar-team-network.name
+  priority = 1000
+  source_ranges = ["130.211.0.0/22", "35.235.240.0/20", "35.191.0.0/16", "35.190.0.0/16", "34.49.0.0/16"]
+  allow {
+    ports = ["80"]
+    protocol = "tcp"
+  }
+  target_tags = ["https-local"]
+  
+  log_config {
+    metadata = "INCLUDE_ALL_METADATA"
+  }
+}
+
 resource "google_compute_firewall" "health-check" {
   project = var.project_id
   name = "${var.network_name}-allow-health-check"

@@ -91,7 +91,9 @@ module "mig_template" {
     "secret-id" = module.secret.name
   }
   tags = [
-    "cesar-team-runner-vm", "https-server", "allow-health-check"
+    "cesar-team-runner-vm", 
+    "https-local", 
+    "allow-health-check"
   ]
   labels = {
         "name" = "grupo-gerenciado-de-instancias",
@@ -138,7 +140,8 @@ module "lb-http" {
   project = var.project_id
   target_tags = [
     module.network.nat_name,
-    module.network.subnetwork_name
+    module.network.subnetwork_name,
+    "https-server"
   ]
   ssl = true
   private_key = tls_private_key.rsa-4096.private_key_pem
