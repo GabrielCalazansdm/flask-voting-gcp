@@ -42,8 +42,9 @@ def init_connection_engine():
         # [END cloud_sql_mysql_sqlalchemy_lifetime]
 
     }
-    
-    secrets = get_secrets()
+    secrets = None
+    while secrets is None or not "DB_HOST" in secrets:
+        secrets = get_secrets()
 
     if "DB_HOST" in secrets:
         return init_tcp_connection_engine(db_config, secrets)
@@ -74,7 +75,8 @@ def init_tcp_connection_engine(db_config, secrets):
             password=db_pass,  # e.g. "my-database-password"
             host=db_hostname,  # e.g. "127.0.0.1"
             port=db_port,  # e.g. 3306
-            database=db_name,  # e.g. "my-database-name"
+            database=db_name,  # e.g. "my-database-name",
+            pool_pre_ping=True
         ),
         **db_config
     )

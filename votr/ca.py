@@ -1,54 +1,86 @@
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509.oid import NameOID
-import datetime
-import uuid
-one_day = datetime.timedelta(1, 0, 0)
+import os
+import sys
+import random
+from OpenSSL import crypto
 
-private_key = rsa.generate_private_key(
-    public_exponent=65537,
-    key_size=2048,
-    backend=default_backend()
-)
+###########
+# CA Cert #
+###########
 
-public_key = private_key.public_key()
-builder = x509.CertificateBuilder()
+ca_key = crypto.PKey()
+ca_key.generate_key(crypto.TYPE_RSA, 2048)
 
-builder = builder.subject_name(x509.Name([
-    x509.NameAttribute(NameOID.COMMON_NAME, u'openstack-ansible Test CA'),
-    x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'openstack-ansible'),
-    x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, u'Default CA Deployment'),
-]))
+ca_cert = crypto.X509()
+ca_cert.set_version(2)
+ca_cert.set_serial_number(random.randint(50000000,100000000))
 
-builder = builder.issuer_name(x509.Name([
-    x509.NameAttribute(NameOID.COMMON_NAME, u'openstack-ansible Test CA'),
-]))
+ca_subj = ca_cert.get_subject()
+ca_subj.commonName = "My CA"
 
-builder = builder.not_valid_before(datetime.datetime.today() - one_day)
-builder = builder.not_valid_after(datetime.datetime(2025, 5, 5))
-builder = builder.serial_number(int(uuid.uuid4()))
-builder = builder.public_key(public_key)
-builder = builder.add_extension(
-    x509.BasicConstraints(ca=True, path_length=None), critical=True,
-)
+ca_cert.add_extensions([
+    crypto.X509Extension("subjectKeyIdentifier", False, "hash", subject=ca_cert),
+])
 
-certificate = builder.sign(
-    private_key=private_key, algorithm=hashes.SHA256(),
-    backend=default_backend()
-)
+ca_cert.add_extensions([
+    crypto.X509Extension("authorityKeyIdentifier", False, "keyid:always", issuer=ca_cert),
+])
 
-print(isinstance(certificate, x509.Certificate))
+ca_cert.add_extensions([
+    crypto.X509Extension("basicConstraints", False, "CA:TRUE"),
+    crypto.X509Extension("keyUsage", False, "keyCertSign, cRLSign"),
+])
 
-with open("server.key", "wb") as f:
-    f.write(private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.BestAvailableEncryption(b"openstack-ansible")
-    ))
+ca_cert.set_issuer(ca_subj)
+ca_cert.set_pubkey(ca_key)
 
-with open("server.crt", "wb") as f:
-    f.write(certificate.public_bytes(
-        encoding=serialization.Encoding.PEM,
-    ))
+ca_cert.gmtime_adj_notBefore(0)
+ca_cert.gmtime_adj_notAfter(10*365*24*60*60)
+ca_cert.sign(ca_key, 'sha256')
+
+# Save certificate
+with open("ca.crt", "wt") as f:
+    f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, ca_cert))
+
+# Save private key
+with open("ca.key", "wt") as f:
+    f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, ca_key))
+
+###############
+# Client Cert #
+###############
+
+client_key = crypto.PKey()
+client_key.generate_key(crypto.TYPE_RSA, 2048)
+
+client_cert = crypto.X509()
+client_cert.set_version(2)
+client_cert.set_serial_number(random.randint(50000000,100000000))
+
+client_subj = client_cert.get_subject()
+client_subj.commonName = "Client"
+
+client_cert.add_extensions([
+    crypto.X509Extension("basicConstraints", False, "CA:FALSE"),
+    crypto.X509Extension("subjectKeyIdentifier", False, "hash", subject=client_cert),
+])
+
+client_cert.add_extensions([
+    crypto.X509Extension("authorityKeyIdentifier", False, "keyid:always", issuer=ca_cert),
+    crypto.X509Extension("extendedKeyUsage", False, "clientAuth"),
+    crypto.X509Extension("keyUsage", False, "digitalSignature"),
+])
+
+client_cert.set_pubkey(client_key)
+client_cert.sign(ca_key, 'sha256')
+
+client_cert.gmtime_adj_notBefore(0)
+client_cert.gmtime_adj_notAfter(10*365*24*60*60)
+client_cert.set_issuer(ca_subj)
+
+# Save certificate
+with open("client.crt", "wt") as f:
+    f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, client_cert))
+
+# Save private key
+with open("client.key", "wt") as f:
+    f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, client_key))
