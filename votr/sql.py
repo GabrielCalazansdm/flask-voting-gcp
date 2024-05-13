@@ -77,7 +77,8 @@ def init_tcp_connection_engine(db_config, secrets):
             port=db_port,  # e.g. 3306
             database=db_name,  # e.g. "my-database-name"
         ),
-        **db_config
+        **db_config,
+        pool_pre_ping=True
     )
     # [END cloud_sql_mysql_sqlalchemy_create_tcp]
 
